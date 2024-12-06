@@ -25,18 +25,24 @@ app.use(express.json());
 // });
 
 app.post("/registration", async (req, res) => {
-  let { name, email, password } = req.body;
-  bcrypt.hash(password, 10, async function (err, hash) {
-    let user = new userModel({
-      name,
-      email,
-      password: hash,
+  let { name, email, password, role } = req.body;
+  if (!name || !email || !password || !role) {
+    return res.status(404).send("Required Fill");
+  } else {
+    bcrypt.hash(password, 10, async function (err, hash) {
+      let user = new userModel({
+        name,
+        email,
+        password: hash,
+        role
+      });
+      await user.save();
+      return res
+        .status(201)
+        .send({ msg: "User Create Successfully", data: user });
     });
-    await user.save();
-    return res
-      .status(201)
-      .send({ msg: "User Create Successfully", data: user });
-  });
+    
+  }
 });
 
 //note:
@@ -60,11 +66,13 @@ app.post("/registration", async (req, res) => {
 
 app.post("/login", async (req, res) => {
   let { email, password } = req.body;
+  
   let existingUser = await userModel.findOne({ email });
   if (existingUser) {
     bcrypt.compare(password, existingUser.password, function (err, result) {
       if (result) {
-        const token = jwt.sign({ email }, process.env.PRV_TOKEN, {
+        let role = existingUser.role;
+        const token = jwt.sign({ email ,role }, process.env.PRV_TOKEN, {
           expiresIn: "1h",
         });
         return res.status(200).send({ msg: "Login Successfully", token });
