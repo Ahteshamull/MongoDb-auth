@@ -9,9 +9,14 @@ let checkUser = (req, res, next) => {
         return res.status(404).send(err);
       } else {
         if (decoded.email) {
-          next();
+          if (decoded.role == "admin") {
+            next();
+            
+          } else {
+            
+            return res.status(400).send("You Are Not Admin");
+          }
         } else {
-          return res.status(404).send(err);
         }
       }
     });
